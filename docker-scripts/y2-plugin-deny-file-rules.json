@@ -1,0 +1,4 @@
+[
+    { "deny-rule": ["/sqlite/**"], "reason": "readonly" },
+    { "whitelist-rule": [] }
+]

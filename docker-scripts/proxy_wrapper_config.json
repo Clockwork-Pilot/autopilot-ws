@@ -1,0 +1,19 @@
+{
+    "namespaces": {
+        "sqlite": {
+            "paths": ["/workspace"],
+            "git": {
+              "denied_subcommands": ["commit", "push", "rebase", "reset", "clean", "gc", "checkout", "stash", "add", "rm", "restore", "stash"],
+                "denied_patterns":    ["--force(?:-with-lease)?", "-f\\b"]
+            },
+            "gh": {
+                "denied_subcommands": ["repo", "release", "secret", "auth"],
+                "denied_patterns":    []
+            },
+            "chmod": {
+                "denied_subcommands": [],
+                "denied_patterns":    [".*"]
+            }
+        }
+    }
+}
