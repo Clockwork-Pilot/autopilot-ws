@@ -29,12 +29,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG USERNAME=node
-ARG UID=1000
-ARG GID=1000
 ARG HOME=/home/$USERNAME
 
-RUN groupadd -g $GID $USERNAME \
-    && useradd -m -u $UID -g $GID $USERNAME \
+# Hardcoded UID 1000 is a default identity; the entrypoint rebrands
+# `node` to whatever HOST_UID/HOST_GID the caller passes, so published
+# images work on any host without build-time UID plumbing.
+RUN useradd -m -u 1000 $USERNAME \
     && mkdir -p $HOME/ \
     && chown -R $USERNAME:$USERNAME $HOME/ \
     && usermod -aG tty $USERNAME
