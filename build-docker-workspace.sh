@@ -16,7 +16,10 @@ if [ -n "$USER_DOCKERFILE" ]; then
         exit 1
     fi
     echo "==> Building $IMAGE_TAG from $USER_DOCKERFILE (FROM $BASE_IMAGE)"
-    docker build -f "$USER_DOCKERFILE" -t "$IMAGE_TAG" "$@" .
+    # Pass BASE_IMAGE so the user Dockerfile can resolve `FROM ${BASE_IMAGE}`
+    # to the locally built base instead of pulling the published remote.
+    # Requires the user Dockerfile to declare `ARG BASE_IMAGE=<default>` above FROM.
+    docker build -f "$USER_DOCKERFILE" -t "$IMAGE_TAG" --build-arg "BASE_IMAGE=$BASE_IMAGE" "$@" .
 else
     echo "==> No user Dockerfile given — tagging $BASE_IMAGE as $IMAGE_TAG"
     docker tag "$BASE_IMAGE" "$IMAGE_TAG"

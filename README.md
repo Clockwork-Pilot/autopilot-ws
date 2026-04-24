@@ -13,6 +13,38 @@ git submodule update --init --recursive
 docker build -t autopilot-ws .
 ```
 
+## Layering a user image on top of the base
+
+A user Dockerfile (e.g. `autopilot-selftest/Dockerfile.agent-sample`) adds extra tooling on top of the workspace base. **The same file is used in both contexts:**
+
+- **CI** (`autopilot`'s `ensure-docker-image` action) — `docker build` runs with no build-args; `FROM ${BASE_IMAGE}` falls back to the Dockerfile's `ARG BASE_IMAGE` default, which points at the published registry image `ghcr.io/clockwork-pilot/autopilot-ws:latest`.
+- **Local dev** (this repo's `build-docker-workspace.sh`) — you want the freshly built **local** base, not the stale image from the registry. The script passes `--build-arg BASE_IMAGE=autopilot-ws-base`, which overrides the default and resolves `FROM ${BASE_IMAGE}` to the locally built tag. No registry pull, no `docker tag` dance.
+
+The Dockerfile only needs one contract to support both:
+
+```dockerfile
+ARG BASE_IMAGE=ghcr.io/clockwork-pilot/autopilot-ws:latest
+FROM ${BASE_IMAGE}
+```
+
+Example: build an agent image from the sample Dockerfile in the sibling `autopilot-selftest` repo:
+
+```bash
+# Sibling checkout layout:
+#   clockwork-pilot/
+#     autopilot-ws/           ← you are here
+#     autopilot-selftest/
+#       Dockerfile.agent-sample
+
+./build-docker-workspace.sh ../autopilot-selftest/Dockerfile.agent-sample
+```
+
+What the script does:
+1. `docker build -f Dockerfile -t autopilot-ws-base .` — builds the base image from this repo.
+2. `docker build -f ../autopilot-selftest/Dockerfile.agent-sample -t autopilot-ws --build-arg BASE_IMAGE=autopilot-ws-base .` — builds the layered image, redirecting `FROM ${BASE_IMAGE}` to the fresh local base.
+
+The resulting `autopilot-ws` tag is what `run-docker-workspace.sh` runs. CI workflows reference the exact same Dockerfile and get the registry-pulled base automatically.
+
 # Run in docker
 
 `run-docker-workspace.sh` mounts the host repo at `/workspace` inside the container. You must export `PROJECT_ROOT` (absolute host path); the script exits with an error if it's unset.
