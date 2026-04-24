@@ -36,8 +36,8 @@ CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; $ENTRYPOINT_CMD")
 # ]
 
 docker run -it --rm \
-    -e CLAUDE_PROJECT_ROOT=/workspace \
-    -e CLAUDE_PLUGIN_ROOT=/plugin \
+    -e PROJECT_ROOT=/workspace \
+    -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
     -e CLAUDE_FILE_RULES=/docker-scripts/y2-plugin-deny-file-rules.json \
     -e PROXY_WRAPPER_CONFIG=/docker-scripts/proxy_wrapper_config.json \

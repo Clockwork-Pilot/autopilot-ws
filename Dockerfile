@@ -48,7 +48,7 @@ RUN cp /docker-scripts/docker-entrypoint.sh /usr/local/bin/ \
 
 # Claude plugin and its python venv
 COPY claude-plugin /plugin
-ENV CLAUDE_PLUGIN_ROOT=/plugin
+ENV PLUGIN_ROOT=/plugin
 RUN bash /docker-scripts/create-venv-docker.sh
 
 # act for workflow testing + dispatch wrapper
@@ -60,7 +60,7 @@ RUN curl -sL https://github.com/nektos/act/releases/download/v0.2.87/act_Linux_x
 
 WORKDIR /workspace
 ENV WORKSPACE_ROOT=/workspace
-ENV CLAUDE_PROJECT_ROOT=/workspace
+ENV PROJECT_ROOT=/workspace
 ENV USERNAME=$USERNAME
 ENV CARGO_HOME=/home/$USERNAME/.cargo
 ENV PATH="$HOME/.local/bin:$PATH"

@@ -10,4 +10,4 @@ source ~/venv/bin/activate
 mkdir -p ~/.local
 
 # export plugin paths
-export PATH="$(python -c "import sys; sys.path.insert(0, '$CLAUDE_PLUGIN_ROOT'); from config import PATH; print(PATH)"):$PATH"
+export PATH="$(python -c "import sys; sys.path.insert(0, '$PLUGIN_ROOT'); from config import PATH; print(PATH)"):$PATH"
