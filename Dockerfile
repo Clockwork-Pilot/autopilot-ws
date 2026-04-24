@@ -51,12 +51,29 @@ COPY claude-plugin /plugin
 ENV PLUGIN_ROOT=/plugin
 RUN bash /docker-scripts/create-venv-docker.sh
 
+# Save the host arch once (uname -m output). Each tool's install below
+# picks the correct release URL in an explicit case per arch.
+RUN echo "ARCH=$(uname -m)" > /etc/arch.env
+
 # act for workflow testing + dispatch wrapper
-RUN curl -sL https://github.com/nektos/act/releases/download/v0.2.87/act_Linux_x86_64.tar.gz \
-      | tar -xz -C /usr/local/bin act \
+RUN . /etc/arch.env \
+    && case "$ARCH" in \
+         x86_64)  curl -sL https://github.com/nektos/act/releases/download/v0.2.87/act_Linux_x86_64.tar.gz | tar -xz -C /usr/local/bin act ;; \
+         aarch64) curl -sL https://github.com/nektos/act/releases/download/v0.2.87/act_Linux_arm64.tar.gz  | tar -xz -C /usr/local/bin act ;; \
+         *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;; \
+       esac \
     && mv /usr/local/bin/act /usr/local/bin/act-real \
     && cp /docker-scripts/act-dispatch-workflow.sh /usr/local/bin/act \
     && chmod +x /usr/local/bin/act
+
+# actionlint for static GitHub Actions workflow linting
+RUN . /etc/arch.env \
+    && case "$ARCH" in \
+         x86_64)  curl -sL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz | tar -xz -C /usr/local/bin actionlint ;; \
+         aarch64) curl -sL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_arm64.tar.gz | tar -xz -C /usr/local/bin actionlint ;; \
+         *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;; \
+       esac \
+    && chmod +x /usr/local/bin/actionlint
 
 WORKDIR /workspace
 ENV WORKSPACE_ROOT=/workspace
