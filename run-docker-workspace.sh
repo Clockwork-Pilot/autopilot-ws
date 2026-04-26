@@ -29,17 +29,24 @@ fi
 
 CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; $ENTRYPOINT_CMD")
 
-# Example of file with rules specified in CLAUDE_FILE_RULES:
+# Example of file with rules specified in AGENT_FILE_ACCESS_RULES:
 # [
 #     { "deny-rule": ["$WORKSPACE_ROOT/**"], "reason": "readonly" },
 #     { "whitelist-rule": ["$WORKSPACE_ROOT/writable-file.txt"] }
 # ]
 
-docker run -it --rm \
+# `-t` requires a TTY on stdin/stdout; skip it when invoked from a
+# non-interactive shell (CI, background tasks) so docker doesn't bail
+# with "the input device is not a TTY". `-i` (stdin attached) is fine
+# either way.
+TTY_FLAG=
+[ -t 0 ] && [ -t 1 ] && TTY_FLAG=-t
+
+docker run -i $TTY_FLAG --rm \
     -e PROJECT_ROOT=/workspace \
     -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
-    -e CLAUDE_FILE_RULES=/docker-scripts/y2-plugin-deny-file-rules.json \
+    -e AGENT_FILE_ACCESS_RULES=/docker-scripts/y2-plugin-deny-file-rules.json \
     -e PROXY_WRAPPER_CONFIG=/docker-scripts/proxy_wrapper_config.json \
     -e DISABLE_STOP_HOOK=${DISABLE_STOP_HOOK:-} \
     -v $CARGO_DIR:/home/node/.cargo:Z \
