@@ -22,7 +22,9 @@ tail -F -n 0 "$LOG" 2>/dev/null | jq -R -r --unbuffered '
         elif $e == "UserPromptSubmit" then "[\($t)] prompt \($d.prompt // "")"
         elif $e == "Edit" then "[\($t)] edit \($d.tool_input.file_path // "?") -\(($d.tool_input.old_string // "") | utf8bytelength) +\(($d.tool_input.new_string // "") | utf8bytelength)"
         elif $e == "Write" then "[\($t)] write \($d.tool_input.file_path // "?") +\(($d.tool_input.content // "") | utf8bytelength)"
-        elif $e == "Bash" then "[\($t)] bash \(.command // "?")"
+        elif $e == "Bash" and .phase == "PostToolUse" then "[\($t)] bash \(.command // "?") (\($d.duration_ms // 0)ms)"
+        elif $e == "Bash" and .status == "blocked"  then "[\($t)] bash \(.command // "?") (blocked: \(.reason // ""))"
+        elif $e == "Bash" then empty
         elif $e == "Notification"     then "[\($t)] notify \($d.message // "")"
         elif $e == "Stop"             then "[\($t)] stop \($d.last_assistant_message // "")"
         elif $e == "SessionEnd"       then "[\($t)] end reason=\($d.reason // "?")"
