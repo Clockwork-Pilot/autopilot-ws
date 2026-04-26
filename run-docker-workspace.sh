@@ -14,6 +14,7 @@ VENV_DIR="$(pwd)/docker-files/venv"
 LOCAL_DIR="$(pwd)/docker-files/.local"
 # use default if not provided externally
 MODEL=${MODEL:-"claude-haiku-4-5"}
+IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 
 # mount support
 mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $VENV_DIR $LOCAL_DIR
@@ -55,4 +56,4 @@ docker run -i $TTY_FLAG --rm \
     -v $CLAUDE_JSON:/home/node/.claude.json:Z \
     -v $LOCAL_DIR:/home/node/.local:Z \
     -v $PROJECT_ROOT:/workspace:Z \
-    autopilot-ws "${CMD[@]}"
+    "$IMAGE_TAG" "${CMD[@]}"
