@@ -32,7 +32,7 @@ PROXY_WRAPPER_CONFIG_PATH = os.environ.get("PROXY_WRAPPER_CONFIG", "/etc/proxy_w
 
 _HARDCODED_CONFIG = {
     "namespaces": {
-        "sqlite": {
+        "workspace": {
             "paths": ["/workspace"],
             "git": {
                 "denied_subcommands": {"rebase", "reset", "clean", "gc", "restore"},
@@ -92,7 +92,7 @@ def is_command_allowed(called_as: str, args: list[str], cwd: str) -> tuple[bool,
     args_str = " ".join(args)
     for pattern in rule["denied_patterns"]:
         if re.search(pattern, args_str):
-            return False, f"forbidden flag pattern '{pattern}'."
+            return False, f"{called_as}: forbidden flag pattern '{pattern}'."
     return True, None
 
 
