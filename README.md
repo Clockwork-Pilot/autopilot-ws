@@ -13,38 +13,6 @@ git submodule update --init --recursive
 docker build -t autopilot-ws .
 ```
 
-## Layering a user image on top of the base
-
-A user Dockerfile (e.g. `autopilot-selftest/Dockerfile.agent-sample`) adds extra tooling on top of the workspace base. **The same file is used in both contexts:**
-
-- **CI** (`autopilot`'s `ensure-docker-image` action) — `docker build` runs with no build-args; `FROM ${BASE_IMAGE}` falls back to the Dockerfile's `ARG BASE_IMAGE` default, which points at the published registry image `ghcr.io/clockwork-pilot/autopilot-ws:latest`.
-- **Local dev** (this repo's `build-docker-workspace.sh`) — you want the freshly built **local** base, not the stale image from the registry. The script passes `--build-arg BASE_IMAGE=autopilot-ws-base`, which overrides the default and resolves `FROM ${BASE_IMAGE}` to the locally built tag. No registry pull, no `docker tag` dance.
-
-The Dockerfile only needs one contract to support both:
-
-```dockerfile
-ARG BASE_IMAGE=ghcr.io/clockwork-pilot/autopilot-ws:latest
-FROM ${BASE_IMAGE}
-```
-
-Example: build an agent image from the sample Dockerfile in the sibling `autopilot-selftest` repo:
-
-```bash
-# Sibling checkout layout:
-#   clockwork-pilot/
-#     autopilot-ws/           ← you are here
-#     autopilot-selftest/
-#       Dockerfile.agent-sample
-
-./build-docker-workspace.sh ../autopilot-selftest/Dockerfile.agent-sample
-```
-
-What the script does:
-1. `docker build -f Dockerfile -t autopilot-ws-base .` — builds the base image from this repo.
-2. `docker build -f ../autopilot-selftest/Dockerfile.agent-sample -t autopilot-ws --build-arg BASE_IMAGE=autopilot-ws-base .` — builds the layered image, redirecting `FROM ${BASE_IMAGE}` to the fresh local base.
-
-The resulting `autopilot-ws` tag is what `run-docker-workspace.sh` runs. CI workflows reference the exact same Dockerfile and get the registry-pulled base automatically.
-
 # Run in docker
 
 `run-docker-workspace.sh` mounts the host repo at `/workspace` inside the container. You must export `PROJECT_ROOT` (absolute host path); the script exits with an error if it's unset.
@@ -61,11 +29,13 @@ The `docker-files/` directory is automatically created when running the Docker i
 
 These artifacts persist between container runs, eliminating the need to re-download packages and re-authenticate on subsequent executions. This folder should typically be added to `.gitignore` as it contains machine-specific state and credentials.
 
+You can override the artifacts storage location using the `DOCKER_FILES` environment variable:
+
 ```bash
 export PROJECT_ROOT=/abs/path/to/repo
 
-# install claude code
-./run-docker-workspace.sh "curl -fsSL https://claude.ai/install.sh | bash"
+# install claude code (override PROXY_WRAPPER_CONFIG to allow installation)
+PROXY_WRAPPER_CONFIG= ./run-docker-workspace.sh "curl -fsSL https://claude.ai/install.sh | bash"
 
 # run claude code using defaults
 ./run-docker-workspace.sh
@@ -76,9 +46,39 @@ export PROJECT_ROOT=/abs/path/to/repo
 # run bash
 ./run-docker-workspace.sh bash
 
-# test
-./run-docker-workspace.sh make c-tcl-tests
+# override artifacts storage location
+DOCKER_FILES=/custom/path/to/artifacts ./run-docker-workspace.sh
 ```
+
+## Layering a user image on top of the base
+
+A user Dockerfile (e.g. `autopilot-selftest/Dockerfile.agent-sample`) adds extra tooling on top of the workspace base. **The same file is used in both contexts:**
+
+- **CI** (`autopilot`'s `ensure-docker-image` action) — `docker build` runs with no build-args; `FROM ${BASE_IMAGE}` falls back to the Dockerfile's `ARG BASE_IMAGE` default, which points at the published registry image `ghcr.io/clockwork-pilot/autopilot-ws:latest`.
+- **Local dev** (this repo's `build-docker-workspace.sh`) — you want the freshly built **local** base, not the stale image from the registry. The script passes `--build-arg BASE_IMAGE=autopilot-ws-base`, which overrides the default and resolves `FROM ${BASE_IMAGE}` to the locally built tag. No registry pull, no `docker tag` dance.
+
+The Dockerfile only needs one contract to support both:
+
+```dockerfile
+ARG BASE_IMAGE=ghcr.io/clockwork-pilot/autopilot-ws:latest
+FROM ${BASE_IMAGE}
+```
+
+Example: build an agent image from a custom Dockerfile in any location:
+
+```bash
+# Custom Dockerfile can be stored anywhere, pass the path as the first argument
+./build-docker-workspace.sh /path/to/custom/Dockerfile
+
+# Example: build from Clockwork Pilot's autopilot-selftest repo
+./build-docker-workspace.sh ../autopilot-selftest/Dockerfile.agent-sample
+```
+
+What the script does:
+1. `docker build -f Dockerfile -t autopilot-ws-base .` — builds the base image from this repo.
+2. `docker build -f ../autopilot-selftest/Dockerfile.agent-sample -t autopilot-ws --build-arg BASE_IMAGE=autopilot-ws-base .` — builds the layered image, redirecting `FROM ${BASE_IMAGE}` to the fresh local base.
+
+The resulting `autopilot-ws` tag is what `run-docker-workspace.sh` runs. CI workflows reference the exact same Dockerfile and get the registry-pulled base automatically.
 
 # Notes on using dev loop
 
