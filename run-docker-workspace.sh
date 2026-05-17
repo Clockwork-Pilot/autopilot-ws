@@ -49,7 +49,7 @@ CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; $ENTRYPOINT_CMD")
 TTY_FLAG=
 [ -t 0 ] && [ -t 1 ] && TTY_FLAG=-t
 
-docker run -i $TTY_FLAG --rm $DOCKER_FLAGS \
+docker run -i $TTY_FLAG --rm \
     -e PROJECT_ROOT=/workspace \
     -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
@@ -61,4 +61,5 @@ docker run -i $TTY_FLAG --rm $DOCKER_FLAGS \
     -v $CLAUDE_JSON:/home/node/.claude.json:Z \
     -v $LOCAL_DIR:/home/node/.local:Z \
     -v $PROJECT_ROOT:/workspace:Z \
+    $DOCKER_FLAGS \
     "$IMAGE_TAG" "${CMD[@]}"

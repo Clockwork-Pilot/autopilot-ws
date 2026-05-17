@@ -52,7 +52,9 @@ RUN cp /docker-scripts/docker-entrypoint.sh /usr/local/bin/ \
 # Claude plugin and its python venv
 COPY claude-plugin /plugin
 ENV PLUGIN_ROOT=/plugin
+USER $USERNAME
 RUN bash /docker-scripts/create-venv-docker.sh
+USER root
 
 # Save the host arch once (uname -m output). Each tool's install below
 # picks the correct release URL in an explicit case per arch.
