@@ -1,0 +1,7 @@
+---
+- name: Install gVisor runsc runtime
+  hosts: local
+  vars_files:
+    - vars.yml
+  roles:
+    - gvisor

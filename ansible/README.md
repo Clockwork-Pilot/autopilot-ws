@@ -9,25 +9,37 @@ Ansible playbook to install a GitHub Actions self-hosted runner on your local ma
 
 ## Usage
 
-You work against any GitHub repo you own. Replace `<github-username>` with your GitHub login and `<your-repo>` with the target repo name.
+Install a self-hosted runner for any GitHub repo you own. Replace `<github-username>` with your GitHub login and `<your-repo>` with the target repo name.
 
-1. Get a registration token for the target repo:
+### Setup
+
+1. Get a registration token:
    ```
    https://github.com/<github-username>/<your-repo>/settings/actions/runners/new
    ```
-   Copy the token from the `--token ...` line on that page.
+   Copy the token from the `--token ...` line.
 
-2. Run the playbook:
+2. Install the runner:
    ```bash
    cd ansible
-   ansible-playbook -i inventory.ini playbook.yml \
+   ansible-playbook -i inventory.ini runner-install.yml \
        -e runner_token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXX \
        -e runner_repo=<github-username>/<your-repo> \
        -e runner_github_username=<github-username> \
        -e docker_files=/abs/path/to/autopilot-ws/docker-files
    ```
 
-   All four `-e` vars are mandatory; the playbook aborts at its first task if any is missing.
+   All four `-e` vars are required; the playbook will abort if any is missing.
+
+3. (Optional) Add gVisor sandboxing:
+   ```bash
+   ansible-playbook -i inventory.ini gvisor-install.yml --ask-become-pass
+   ```
+
+### Playbooks
+
+- **`runner-install.yml`** — Install GitHub Actions self-hosted runner
+- **`gvisor-install.yml`** — Add gVisor/runsc sandboxing (requires `--ask-become-pass`)
 
 ## Configuration
 
@@ -61,6 +73,51 @@ systemctl --user start  'actions.runner.<user>.<repo>.*'
 journalctl --user -u 'actions.runner.<user>.<repo>.*' -f
 ```
 
+## gVisor Sandboxing (Optional)
+
+Add gVisor's `runsc` container runtime to sandbox untrusted PR code:
+
+```bash
+ansible-playbook -i inventory.ini gvisor-install.yml
+```
+
+### What it does
+
+- Downloads gVisor's `runsc` runtime binary
+- Registers `runsc` as an available Docker runtime (`/usr/local/bin/runsc`)
+- Enables `live-restore` in Docker daemon config (running containers survive daemon restarts)
+- Updates Docker daemon to recognize the `runsc` runtime
+- Sets `DOCKER_RUNTIME=--runtime=runsc` environment variable for the runner
+
+> **Warning:** The playbook will prompt for confirmation before restarting the Docker daemon. A restart is required — it cannot be avoided. If `live-restore` was already enabled in your Docker config, running containers will survive. Otherwise **all running containers will be stopped**.
+
+Containers then execute with `docker run --runtime=runsc`, providing kernel-level sandboxing instead of direct host kernel access.
+
+### Configuration
+
+Override gVisor settings in `vars.yml` or via `-e`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `runsc_arch` | auto-detected | System architecture (x86_64 or aarch64) |
+| `runsc_download_url` | `https://storage.googleapis.com/gvisor/releases/release/latest/runsc` | gVisor runsc binary download URL |
+
+## Playbook Structure
+
+```
+ansible/
+├── runner-install.yml          # Install GitHub Actions runner
+├── gvisor-install.yml          # Install gVisor/runsc sandboxing
+├── vars.yml                    # Shared variables (runner config, gVisor defaults)
+├── inventory.ini               # Ansible inventory (localhost by default)
+├── roles/gvisor/               # gVisor role
+│   ├── tasks/main.yml          # Install runsc, configure Docker
+│   ├── defaults/main.yml       # gVisor version, architecture, URLs
+│   └── templates/              # Configuration templates
+│       └── runsc-runtime.json.j2
+└── README.md
+```
+
 ## Using the runner in a workflow
 
 ```yaml
@@ -68,3 +125,5 @@ jobs:
   my-job:
     runs-on: [self-hosted, coding-agent]
 ```
+
+To use gVisor sandboxing, workflows run automatically with `--runtime=runsc` (set by Ansible).

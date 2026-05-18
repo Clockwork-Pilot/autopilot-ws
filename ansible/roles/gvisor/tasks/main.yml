@@ -1,0 +1,66 @@
+---
+- name: Install gVisor runsc runtime
+  become: yes
+  block:
+    - name: Download runsc binary
+      get_url:
+        url: "{{ runsc_download_url }}"
+        dest: /usr/local/bin/runsc
+        mode: '0755'
+
+    - name: Template runsc runtime configuration
+      template:
+        src: runsc-runtime.json.j2
+        dest: /tmp/runsc-runtime.json
+        mode: '0644'
+
+    - name: Merge runsc runtime into Docker daemon.json
+      shell: |
+        python3 << 'EOF'
+        import json
+
+        # Read runsc config
+        with open('/tmp/runsc-runtime.json', 'r') as f:
+          runsc_config = json.load(f)
+
+        # Read existing daemon.json or start empty
+        try:
+          with open('/etc/docker/daemon.json', 'r') as f:
+            daemon_config = json.load(f)
+        except FileNotFoundError:
+          daemon_config = {}
+
+        # Merge runsc runtime and enable live-restore into daemon config
+        if 'runtimes' not in daemon_config:
+          daemon_config['runtimes'] = {}
+        daemon_config['runtimes'].update(runsc_config['runtimes'])
+        daemon_config['live-restore'] = True
+
+        # Write back with pretty formatting
+        with open('/etc/docker/daemon.json', 'w') as f:
+          json.dump(daemon_config, f, indent=2)
+        EOF
+
+    - name: Clean up temporary config
+      file:
+        path: /tmp/runsc-runtime.json
+        state: absent
+
+    - name: Confirm Docker daemon restart
+      pause:
+        prompt: "Docker must be restarted to load the runsc runtime. If live-restore was already enabled in your Docker config, running containers will survive. Otherwise ALL running containers will be stopped. Press Enter to continue, Ctrl+C to abort"
+
+    - name: Restart Docker daemon
+      systemd:
+        name: docker
+        state: restarted
+        daemon_reload: yes
+
+    - name: Smoke test runsc runtime
+      shell: docker run --rm --runtime=runsc alpine:latest dmesg | grep -i gvisor
+      changed_when: false
+      register: smoke_test
+
+    - name: Show smoke test result
+      debug:
+        msg: "{{ smoke_test.stdout_lines }}"

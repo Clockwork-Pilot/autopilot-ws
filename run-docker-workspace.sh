@@ -18,6 +18,7 @@ LOCAL_DIR="$DOCKER_FILES/.local"
 MODEL=${MODEL:-"claude-haiku-4-5"}
 IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 DOCKER_FLAGS=${DOCKER_FLAGS:-}
+DOCKER_RUNTIME=${DOCKER_RUNTIME:-}
 if [ -z "${PROXY_WRAPPER_CONFIG+x}" ]; then
     PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
 fi
@@ -50,6 +51,7 @@ TTY_FLAG=
 [ -t 0 ] && [ -t 1 ] && TTY_FLAG=-t
 
 docker run -i $TTY_FLAG --rm \
+    $DOCKER_RUNTIME \
     -e PROJECT_ROOT=/workspace \
     -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
