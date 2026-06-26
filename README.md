@@ -35,7 +35,7 @@ You can override the artifacts storage location using the `DOCKER_FILES` environ
 export PROJECT_ROOT=/abs/path/to/repo
 
 # install claude code (override PROXY_WRAPPER_CONFIG to allow installation)
-./run-docker-workspace.sh "curl -fsSL https://claude.ai/install.sh | bash"
+PROJECT_ROOT=$PWD PROXY_WRAPPER_CONFIG= ./run-docker-workspace.sh "curl -fsSL https://claude.ai/install.sh | bash"
 
 # run claude code using defaults
 ./run-docker-workspace.sh

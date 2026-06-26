@@ -20,7 +20,9 @@ MODEL=${MODEL:-"claude-haiku-4-5"}
 IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 DOCKER_FLAGS=${DOCKER_FLAGS:-}
 DOCKER_RUNTIME=${DOCKER_RUNTIME:-}
-PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
+if [ -z "${PROXY_WRAPPER_CONFIG+x}" ]; then
+    PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
+fi
 
 # mount support
 mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR $NVM_DIR
