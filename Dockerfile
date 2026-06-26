@@ -39,15 +39,15 @@ RUN useradd -m -u 1000 $USERNAME \
     && chown -R $USERNAME:$USERNAME $HOME/ \
     && usermod -aG tty $USERNAME
 
-# Harness scripts: entrypoint + proxy wrapper for git/gh/chmod
+# Harness scripts: entrypoint + proxy wrapper for git/gh/chmod + heartbeat
 COPY docker-scripts /docker-scripts
 RUN cp /docker-scripts/docker-entrypoint.sh /usr/local/bin/ \
     && chmod +x /usr/local/bin/docker-entrypoint.sh \
     && cp /docker-scripts/proxy_wrapper.py /usr/local/bin/proxy_wrapper.py \
     && chmod +x /usr/local/bin/proxy_wrapper.py \
-    && ln -sf /usr/local/bin/proxy_wrapper.py /usr/local/bin/git \
-    && ln -sf /usr/local/bin/proxy_wrapper.py /usr/local/bin/gh \
-    && ln -sf /usr/local/bin/proxy_wrapper.py /usr/local/bin/chmod
+    && cp /docker-scripts/heartbeat.sh /usr/local/bin/heartbeat.sh \
+    && chmod +x /usr/local/bin/heartbeat.sh \
+    && python3 /usr/local/bin/proxy_wrapper.py --install git gh chmod sed
 
 # Claude plugin and its python venv
 COPY claude-plugin /plugin
@@ -90,4 +90,4 @@ ENV PATH="$HOME/.local/bin:$PATH"
 USER root
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["/bin/bash"]
+CMD ["heartbeat.sh"]

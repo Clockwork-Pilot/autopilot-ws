@@ -12,6 +12,7 @@ DOCKER_FILES=${DOCKER_FILES:-"$(pwd)/docker-files"}
 
 CLAUDE_JSON="$DOCKER_FILES/.claude.local.json"
 CLAUDE_CREDENTIALS_DIR="$DOCKER_FILES/.credentials"
+NVM_DIR="$DOCKER_FILES/.nvm"
 CARGO_DIR="$DOCKER_FILES/.cargo"
 LOCAL_DIR="$DOCKER_FILES/.local"
 # use default if not provided externally
@@ -19,12 +20,10 @@ MODEL=${MODEL:-"claude-haiku-4-5"}
 IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 DOCKER_FLAGS=${DOCKER_FLAGS:-}
 DOCKER_RUNTIME=${DOCKER_RUNTIME:-}
-if [ -z "${PROXY_WRAPPER_CONFIG+x}" ]; then
-    PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
-fi
+PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
 
 # mount support
-mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR
+mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR $NVM_DIR
 
 # assign default value if file is empty
 [ -s "$CLAUDE_JSON" ] || printf '{}\n' > "$CLAUDE_JSON"
@@ -32,10 +31,11 @@ mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR
 if [ $# -gt 0 ]; then
     ENTRYPOINT_CMD="$*"
 else
+    # enable proxy wrapper just for claude
     ENTRYPOINT_CMD="claude --dangerously-skip-permissions --model $MODEL --plugin-dir /plugin"
 fi
 
-CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; $ENTRYPOINT_CMD")
+CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; PROXY_WRAPPER_CONFIG=\"$PROXY_WRAPPER_CONFIG\" $ENTRYPOINT_CMD")
 
 # Example of file with rules specified in AGENT_FILE_ACCESS_RULES:
 # [
@@ -56,9 +56,9 @@ docker run -i $TTY_FLAG --rm \
     -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
     -e AGENT_FILE_ACCESS_RULES=/docker-scripts/y2-plugin-deny-file-rules.json \
-    -e PROXY_WRAPPER_CONFIG="$PROXY_WRAPPER_CONFIG" \
     -e DISABLE_STOP_HOOK=${DISABLE_STOP_HOOK:-} \
     -v $CARGO_DIR:/home/node/.cargo:Z \
+    -v $NVM_DIR:/home/node/.nvm:Z \
     -v $CLAUDE_CREDENTIALS_DIR:/home/node/.claude:Z \
     -v $CLAUDE_JSON:/home/node/.claude.json:Z \
     -v $LOCAL_DIR:/home/node/.local:Z \

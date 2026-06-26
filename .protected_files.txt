@@ -1,0 +1,2 @@
+/workspace/claude-plugin/knowledge_tool/knowledge_tool.k.json
+/workspace/claude-plugin/knowledge_tool/knowledge_tool.k.md

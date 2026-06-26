@@ -7,12 +7,13 @@
                 "denied_patterns":    ["--force(?:-with-lease)?", "-f\\b"]
             },
             "gh": {
-                "denied_subcommands": ["repo", "release", "secret", "auth"],
-                "denied_patterns":    []
+                "denied_subcommands": ["repo", "release", "secret", "auth"]
             },
             "chmod": {
-                "denied_subcommands": [],
                 "denied_patterns":    [".*"]
+            },
+            "sed": {
+                "allowed_patterns":   ["-i"]
             }
         }
     }
