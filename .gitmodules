@@ -1,3 +1,4 @@
 [submodule "claude-plugin"]
 	path = claude-plugin
 	url = git@github.com:Clockwork-Pilot/y2-claude-plugin.git
+	branch = main
