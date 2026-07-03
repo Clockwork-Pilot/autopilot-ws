@@ -56,15 +56,21 @@ RUN mkdir -p /sqlite && chown -R node:node /sqlite
 
 USER node
 
-RUN cd /sqlite && \
-    wget https://sqlite.org/2026/sqlite-src-3510200.zip && \
-    ls /sqlite && \
-    unzip /sqlite/sqlite-src-3510200.zip -d /sqlite && \
-    rm /sqlite/sqlite-src-3510200.zip && \
-    mv /sqlite/sqlite-src-3510200/* /sqlite/ && \
-    rm -rf /sqlite/sqlite-src-3510200 && \
-    cd /sqlite && \
-    ./configure --all --disable-amalgamation && make && rm *.o
+# RUN cd /sqlite && \
+#     wget https://sqlite.org/2026/sqlite-src-3510200.zip && \
+#     ls /sqlite && \
+#     unzip /sqlite/sqlite-src-3510200.zip -d /sqlite && \
+#     rm /sqlite/sqlite-src-3510200.zip && \
+#     mv /sqlite/sqlite-src-3510200/* /sqlite/ && \
+#     rm -rf /sqlite/sqlite-src-3510200 && \
+#     cd /sqlite && \
+#     ./configure --all --disable-amalgamation && make && rm *.o
+
+# Install rustup (nothing in the base image provides it). Put $CARGO_HOME/bin
+# on PATH so non-login RUN shells find the proxies.
+ENV PATH="/home/node/.cargo/bin:$PATH"
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+    | sh -s -- -y --no-modify-path --default-toolchain none
 
 RUN rustup install nightly-2026-03-26-x86_64-unknown-linux-gnu \
     && rustup component add --toolchain nightly-2026-03-26-x86_64-unknown-linux-gnu \
