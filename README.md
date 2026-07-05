@@ -50,20 +50,6 @@ PROJECT_ROOT=$PWD PROXY_WRAPPER_CONFIG= ./run-docker-workspace.sh "curl -fsSL ht
 DOCKER_FILES=/custom/path/to/artifacts ./run-docker-workspace.sh
 ```
 
-# Install nodejs and codegraph in docker container
-```
-PROJECT_ROOT=$PWD ./run-docker-workspace.sh 'bash << "EOF"
-export NVM_DIR=$HOME/.local && \
-curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash && \
-. $HOME/.local/nvm.sh && \
-nvm install 22.5.0 && \
-ln -s "$NVM_DIR/versions/node/v22.5.0/bin/node" "$HOME/.local/bin/node" && \
-ln -s "$NVM_DIR/versions/node/v22.5.0/bin/npm" "$HOME/.local/bin/npm" && \
-ln -s "$NVM_DIR/versions/node/v22.5.0/bin/npx" "$HOME/.local/bin/npx" && \
-curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
-EOF'
-```
-
 ## Layering a user image on top of the base
 
 A user Dockerfile (e.g. `autopilot-selftest/Dockerfile.agent-sample`) adds extra tooling on top of the workspace base. **The same file is used in both contexts:**
