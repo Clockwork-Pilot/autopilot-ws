@@ -34,15 +34,15 @@ test_chmod_blocked "--reference=file" || exit 1
 echo
 
 # Verify config is properly structured
-echo "Verifying cli_wrapper config..."
-if grep -q '"chmod"' ./docker-scripts/cli_wrapper_rules.json; then
+echo "Verifying proxy_wrapper config..."
+if grep -q '"chmod"' ./docker-scripts/proxy_wrapper_rules.json; then
     echo "✓ PASS: chmod rule found in config"
 else
     echo "✗ FAIL: chmod rule not in config"
     exit 1
 fi
 
-if grep -q '"denied_patterns".*"\.\*"' ./docker-scripts/cli_wrapper_rules.json; then
+if grep -q '"denied_patterns".*"\.\*"' ./docker-scripts/proxy_wrapper_rules.json; then
     echo "✓ PASS: chmod has catch-all deny pattern"
 else
     echo "✗ FAIL: chmod does not have catch-all deny pattern"
@@ -55,5 +55,5 @@ echo "All chmod blocking tests PASSED ✓"
 echo
 echo "Summary:"
 echo "  • chmod is configured to be completely blocked in /workspace"
-echo "  • cli_wrapper (installed in the claude-plugin venv) uses a catch-all deny pattern for chmod"
+echo "  • proxy_wrapper (installed in the claude-plugin venv) uses a catch-all deny pattern for chmod"
 echo "  • Agents running in Docker CANNOT modify file permissions"
