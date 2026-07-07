@@ -2,3 +2,6 @@
 	path = claude-plugin
 	url = git@github.com:Clockwork-Pilot/y2-claude-plugin.git
 	branch = main
+[submodule "clis-wrapper"]
+	path = clis-wrapper
+	url = git@github.com:Clockwork-Pilot/clis-wrapper.git
