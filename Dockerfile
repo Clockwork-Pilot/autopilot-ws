@@ -10,6 +10,7 @@ ENV DEVCONTAINER=true
 #   sudo, gosu — entrypoint user drop
 #   python3 + pip + venv — claude plugin venv
 #   jq, less, procps, unzip — common scripting needs
+#   openssh-client — ssh-add/ssh for forwarded SSH agent
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash \
       ca-certificates \
@@ -19,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       gosu \
       jq \
       less \
+      openssh-client \
       procps \
       python3 \
       python3-pip \
@@ -46,6 +48,7 @@ RUN cp /docker-scripts/docker-entrypoint.sh /usr/local/bin/ \
 # Claude plugin and its python venv
 COPY claude-plugin /plugin
 COPY clis-wrapper /clis-wrapper
+RUN chown -R $USERNAME:$USERNAME /clis-wrapper
 ENV PLUGIN_ROOT=/plugin
 USER $USERNAME
 RUN bash /docker-scripts/create-venv-docker.sh

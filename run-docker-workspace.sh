@@ -20,6 +20,7 @@ MODEL=${MODEL:-"claude-haiku-4-5"}
 IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 DOCKER_FLAGS=${DOCKER_FLAGS:-}
 DOCKER_RUNTIME=${DOCKER_RUNTIME:-}
+SSH_PUBKEY=${SSH_PUBKEY:-"$HOME/.ssh/id_ed25519.pub"}
 
 # mount support
 mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR $NVM_DIR
@@ -55,5 +56,7 @@ docker run -i $TTY_FLAG --rm \
     -v $CLAUDE_JSON:/home/node/.claude.json:Z \
     -v $LOCAL_DIR:/home/node/.local:Z \
     -v $PROJECT_ROOT:/workspace:Z \
+    ${SSH_AUTH_SOCK:+-v "$SSH_AUTH_SOCK":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent} \
+    ${SSH_PUBKEY:+-v "$SSH_PUBKEY":/home/node/.ssh/id_ed25519.pub:ro} \
     $DOCKER_FLAGS \
     "$IMAGE_TAG" "${CMD[@]}"
