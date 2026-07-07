@@ -5,10 +5,10 @@ ENV TZ="$TZ"
 ENV DEVCONTAINER=true
 
 # Harness contract dependencies:
-#   bash, git, gh — entrypoint + proxy_wrapper symlinks
+#   bash, git, gh — entrypoint
 #   curl, wget, ca-certificates — fetching act, general scripting
 #   sudo, gosu — entrypoint user drop
-#   python3 + pip + venv — claude plugin venv + proxy_wrapper.py
+#   python3 + pip + venv — claude plugin venv
 #   jq, less, procps, unzip — common scripting needs
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash \
@@ -39,16 +39,13 @@ RUN useradd -m -u 1000 $USERNAME \
     && chown -R $USERNAME:$USERNAME $HOME/ \
     && usermod -aG tty $USERNAME
 
-# Harness scripts: entrypoint + proxy wrapper for git/gh/chmod
 COPY docker-scripts /docker-scripts
 RUN cp /docker-scripts/docker-entrypoint.sh /usr/local/bin/ \
-    && chmod +x /usr/local/bin/docker-entrypoint.sh \
-    && cp /docker-scripts/proxy_wrapper.py /usr/local/bin/proxy_wrapper.py \
-    && chmod +x /usr/local/bin/proxy_wrapper.py \
-    && python3 /usr/local/bin/proxy_wrapper.py --install git gh chmod sed
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Claude plugin and its python venv
 COPY claude-plugin /plugin
+COPY clis-wrapper /clis-wrapper
 ENV PLUGIN_ROOT=/plugin
 USER $USERNAME
 RUN bash /docker-scripts/create-venv-docker.sh

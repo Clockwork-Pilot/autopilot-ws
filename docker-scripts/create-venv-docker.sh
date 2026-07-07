@@ -5,3 +5,5 @@ python3 -m venv ~/venv
 source ~/venv/bin/activate
 pip install -r "$PLUGIN_ROOT/knowledge_tool/requirements.txt"
 pip install -r "$PLUGIN_ROOT/requirements.txt"
+pip install /clis-wrapper/cli_wrapper_package
+python3 /clis-wrapper/proxy_wrapper.py --install --config /docker-scripts/proxy_wrapper_rules.json git gh chmod sed

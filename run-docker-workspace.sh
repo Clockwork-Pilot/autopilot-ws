@@ -20,9 +20,6 @@ MODEL=${MODEL:-"claude-haiku-4-5"}
 IMAGE_TAG=${IMAGE_TAG:-"autopilot-ws"}
 DOCKER_FLAGS=${DOCKER_FLAGS:-}
 DOCKER_RUNTIME=${DOCKER_RUNTIME:-}
-if [ -z "${PROXY_WRAPPER_CONFIG+x}" ]; then
-    PROXY_WRAPPER_CONFIG="/docker-scripts/proxy_wrapper_config.json"
-fi
 
 # mount support
 mkdir -p $CLAUDE_CREDENTIALS_DIR $CARGO_DIR $LOCAL_DIR $NVM_DIR
@@ -37,13 +34,7 @@ else
     ENTRYPOINT_CMD="claude --dangerously-skip-permissions --model $MODEL --plugin-dir /plugin"
 fi
 
-CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; PROXY_WRAPPER_CONFIG=\"$PROXY_WRAPPER_CONFIG\" $ENTRYPOINT_CMD")
-
-# Example of file with rules specified in AGENT_FILE_ACCESS_RULES:
-# [
-#     { "deny-rule": ["$WORKSPACE_ROOT/**"], "reason": "readonly" },
-#     { "whitelist-rule": ["$WORKSPACE_ROOT/writable-file.txt"] }
-# ]
+CMD=(bash -c "source /docker-scripts/user-entrypoint.sh ; $ENTRYPOINT_CMD")
 
 # `-t` requires a TTY on stdin/stdout; skip it when invoked from a
 # non-interactive shell (CI, background tasks) so docker doesn't bail
@@ -57,7 +48,6 @@ docker run -i $TTY_FLAG --rm \
     -e PROJECT_ROOT=/workspace \
     -e PLUGIN_ROOT=/plugin \
     -e WORKSPACE_ROOT=/workspace \
-    -e AGENT_FILE_ACCESS_RULES=/docker-scripts/y2-plugin-deny-file-rules.json \
     -e DISABLE_STOP_HOOK=${DISABLE_STOP_HOOK:-} \
     -v $CARGO_DIR:/home/node/.cargo:Z \
     -v $NVM_DIR:/home/node/.nvm:Z \
